@@ -1,0 +1,10 @@
+{
+  "IP":"127.0.0.1",
+  "Port":8080,
+  "LogLevel":"debug",
+  "HTTPSessionMaxAge":86400,
+  "WD":"${pwd}",
+  "Locale":"en_US",
+  "Playground":"${WD}/workspaces/playground",
+  "UsersWorkspaces":"${WD}/workspaces"
+}
