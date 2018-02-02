@@ -1,6 +1,7 @@
 {
-  "IP":"127.0.0.1",
+  "IP":"",
   "Port":8080,
+  "Context": "",
   "LogLevel":"debug",
   "HTTPSessionMaxAge":86400,
   "WD":"${pwd}",

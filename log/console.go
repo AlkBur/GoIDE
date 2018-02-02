@@ -1,8 +1,8 @@
 package log
 
 import (
-	"os"
 	"encoding/json"
+	"os"
 	"time"
 )
 
@@ -10,15 +10,15 @@ var colors = []brush{
 	newBrush("1;31"), // Error              red
 	newBrush("1;33"), // Warning            yellow
 	newBrush("1;34"), // Informational      blue
-	newBrush("44;33"), // Debug              Background blue
+	newBrush("1;37"), // Debug              grey
 }
 
 type brush func(string) string
 
 type consoleWriter struct {
 	lg       *logWriter
-	Level    LogLevel  `json:"level"`
-	Colorful bool      `json:"color"` //this filed is useful only when system's terminal supports color
+	Level    LogLevel `json:"level"`
+	Colorful bool     `json:"color"` //this filed is useful only when system's terminal supports color
 }
 
 func init() {
@@ -59,4 +59,13 @@ func (c *consoleWriter) WriteMsg(when time.Time, msg string, level LogLevel) err
 	}
 	c.lg.println(when, msg)
 	return nil
+}
+
+// newBrush return a fix color Brush
+func newBrush(color string) brush {
+	pre := "\x1b["
+	reset := "\x1b[0m"
+	return func(text string) string {
+		return pre + color + "m" + text + reset
+	}
 }

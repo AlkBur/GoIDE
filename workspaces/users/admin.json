@@ -1,22 +1,22 @@
 {
-  "Name":"admin",
-  "Password":"",
-  "Email":"",
-  "Workspace":"${GOPATH}",
-  "Locale":"en_US",
-  "Created":1517397740003864100,
-  "Updated":1517397740003864100,
-  "Lived":0,
-  "Editor":{
-    "FontFamily":"Consolas, 'Courier New', monospace",
-    "FontSize":"13px",
-    "LineHeight":"17px",
-    "Theme":"default",
-    "TabSize":4
-  },
-  "LatestSessionContent":{
-    "fileTree":[],
-    "files":[],
-    "currentFile":""
-  }
+    "Name": "admin",
+    "Password": "$2a$10$0iuA0HFxAT.SOO6eJAj7tuRgIWDLM6LldIvqqBrV5AEn/1d58IGDy",
+    "Email": "",
+    "Workspace": "${GOPATH}",
+    "Locale": "en_US",
+    "Created": 1517493038348726600,
+    "Updated": 1517493038348726600,
+    "Lived": 1517493038348726600,
+    "Editor": {
+        "FontFamily": "Consolas, 'Courier New', monospace",
+        "FontSize": "13px",
+        "LineHeight": "17px",
+        "Theme": "default",
+        "TabSize": 4
+    },
+    "LatestSessionContent": {
+        "fileTree": [],
+        "files": [],
+        "currentFile": ""
+    }
 }

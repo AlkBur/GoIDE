@@ -1,25 +1,27 @@
 package conf
 
 import (
+	"encoding/json"
+	"github.com/AlkBur/GoIDE/log"
+	"golang.org/x/crypto/bcrypt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"github.com/AlkBur/GoIDE/log"
-	"encoding/json"
 	"time"
 )
 
 type User struct {
-	Name                  string
-	Password              string
-	Email                 string
-	Workspace             string // the GOPATH of this user
-	Locale                string
-	Created               int64  // user create time in unix nano
-	Updated               int64  // preference update time in unix nano
-	Lived                 int64  // the latest session activity in unix nano
-	Editor                *editor
-	LatestSessionContent  *LatestSessionContent
+	Name                 string
+	Password             string
+	Email                string
+	Workspace            string // the GOPATH of this user
+	Locale               string
+	Created              int64 // user create time in unix nano
+	Updated              int64 // preference update time in unix nano
+	Lived                int64 // the latest session activity in unix nano
+	Editor               *editor
+	LatestSessionContent *LatestSessionContent
 }
 
 type LatestSessionContent struct {
@@ -43,38 +45,59 @@ func (u *User) WorkspacePath() string {
 	return filepath.FromSlash(w)
 }
 
-func createUser(name, dir string) error {
-	filename := filepath.Join(dir, name+".json")
-	usr := &User{
-		Name: name,
-		Workspace: "${GOPATH}",
-		Locale: IDE.Locale,
+func (u *User) Save() bool {
+	usersPath := filepath.Join(IDE.UsersWorkspaces, "users")
+	filename := filepath.Join(usersPath, u.Name+".json")
+
+	bytes, err := json.MarshalIndent(u, "", "    ")
+
+	if nil != err {
+		log.Error(err)
+
+		return false
+	}
+
+	if "" == string(bytes) {
+		log.Error("Truncated user [" + u.Name + "]")
+
+		return false
+	}
+
+	if err = ioutil.WriteFile(filename, bytes, 0644); nil != err {
+		log.Error(err)
+
+		return false
+	}
+
+	return true
+}
+
+func NewUser(username, password, email, workspace string) *User {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+
+	now := time.Now().UnixNano()
+
+	return &User{Name: username, Password: string(hash), Email: email, Workspace: workspace,
+		Locale:  IDE.Locale,
+		Created: now, Updated: now, Lived: now,
 		Editor: &editor{
 			FontFamily: "Consolas, 'Courier New', monospace",
-			FontSize: "13px",
-			LineHeight: "17px",
-			Theme: "default",
-			TabSize: 4,
+			FontSize:   "13px", LineHeight: "17px",
+			Theme: "default", TabSize: 4,
 		},
 		LatestSessionContent: &LatestSessionContent{
 			FileTree: make([]string, 0),
-			Files: make([]string, 0),
+			Files:    make([]string, 0),
 		},
-		Created: time.Now().UnixNano(),
-		Updated: time.Now().UnixNano(),
 	}
+}
 
-	jsonFile, err := os.Create(filename)
-	if err != nil {
-		return err
+func (u *User) CheckPassword(password string) bool {
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
+		return false
 	}
-	defer jsonFile.Close()
-
-	jsonData, err := json.Marshal(usr)
-	if err != nil {
-		return err
-	}
-	jsonFile.Write(jsonData)
-	log.Info("Created a user file [%s]", filename)
-	return nil
+	return true
 }

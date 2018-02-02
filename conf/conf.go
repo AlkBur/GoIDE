@@ -1,19 +1,18 @@
 package conf
 
 import (
+	"encoding/json"
+	"github.com/AlkBur/GoIDE/event"
+	"github.com/AlkBur/GoIDE/log"
+	"github.com/AlkBur/GoIDE/util"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
-	"time"
-	"github.com/AlkBur/GoIDE/log"
-	"encoding/json"
-	"github.com/AlkBur/GoIDE/util"
 	"strings"
-	"os/exec"
-	"github.com/AlkBur/GoIDE/event"
+	"time"
 )
-
 
 var (
 	// IDE configurations.
@@ -24,14 +23,15 @@ var (
 
 // Configuration.
 type conf struct {
-	IP                    string // server ip, ${ip}
-	Port                  int    // server port
-	LogLevel              string // logging level: trace/debug/info/warn/error
-	HTTPSessionMaxAge     int    // HTTP session max age (in seciond)
-	WD                    string // current working direcitory, ${pwd}
-	Locale                string // default locale
-	Playground            string // playground directory
-	UsersWorkspaces       string // users' workspaces directory (admin defaults to ${GOPATH}, others using this)
+	IP                string // server ip, ${ip}
+	Port              int    // server port
+	Context           string // server context
+	LogLevel          string // logging level: trace/debug/info/warn/error
+	HTTPSessionMaxAge int    // HTTP session max age (in seciond)
+	WD                string // current working direcitory, ${pwd}
+	Locale            string // default locale
+	Playground        string // playground directory
+	UsersWorkspaces   string // users' workspaces directory (admin defaults to ${GOPATH}, others using this)
 }
 
 func Load(confPath, confIP string, confPort int, confLogLevel string) {
@@ -41,14 +41,14 @@ func Load(confPath, confIP string, confPort int, confLogLevel string) {
 
 func initIDE(confPath, confIP string, confPort int, confLogLevel string) {
 	IDE = &conf{
-		IP: confIP,
-		Port: confPort,
-		LogLevel: confLogLevel,
+		IP:                confIP,
+		Port:              confPort,
+		LogLevel:          confLogLevel,
 		HTTPSessionMaxAge: 86400,
-		Locale: "en_US",
-		WD: "${pwd}",
-		Playground: "${WD}/workspaces/playground",
-		UsersWorkspaces: "${WD}/workspaces",
+		Locale:            "en_US",
+		WD:                "${pwd}",
+		Playground:        "${WD}/workspaces/playground",
+		UsersWorkspaces:   "${WD}/workspaces",
 	}
 	if !util.IsExist(confPath) {
 		err := createDefaultConfig(confPath)
@@ -70,6 +70,16 @@ func initIDE(confPath, confIP string, confPort int, confLogLevel string) {
 		log.Error("Parses [IDE.json] error: ", err)
 
 		os.Exit(-1)
+	}
+
+	if confIP != "" {
+		IDE.IP = confIP
+	}
+	if confPort != 8080 {
+		IDE.Port = confPort
+	}
+	if confLogLevel != "info" {
+		IDE.LogLevel = confLogLevel
 	}
 
 	// Logging Level
@@ -99,11 +109,12 @@ func initIDE(confPath, confIP string, confPort int, confLogLevel string) {
 
 	// Working Directory
 	pwd := util.Pwd()
+	log.Debug("${pwd} [%s]", pwd)
 
 	// Config working directory
-	IDE.WD = strings.Replace(IDE.WD, "${pwd}",  pwd, 1)
+	IDE.WD = strings.Replace(IDE.WD, "${pwd}", pwd, 1)
 	IDE.WD = strings.Replace(IDE.WD, "${home}", home, 1)
-	log.Debug("${pwd} [%s]", IDE.WD)
+	log.Debug("${WD} [%s]", IDE.WD)
 
 	// Playground Directory
 	IDE.Playground = strings.Replace(IDE.Playground, "${WD}", IDE.WD, 1)
@@ -127,8 +138,8 @@ func initIDE(confPath, confIP string, confPort int, confLogLevel string) {
 		createDir(IDE.UsersWorkspaces)
 	}
 
-	time := strconv.FormatInt(time.Now().UnixNano(), 10)
-	log.Debug("${time} [%s]", time)
+	t := strconv.FormatInt(time.Now().UnixNano(), 10)
+	log.Debug("${time} [%s]", t)
 }
 
 func initUsers() {
@@ -152,11 +163,11 @@ func initUsers() {
 	f.Close()
 
 	if len(names) == 0 {
-		err = createUser("admin", usersPath)
-		if nil != err {
-			log.Error(err)
+		usr := NewUser("admin", "", "", "${GOPATH}")
+		if !usr.Save() {
 			os.Exit(-1)
 		}
+		log.Info("Created user [%s]", usr.Name)
 	}
 
 	for _, name := range names {
@@ -215,14 +226,14 @@ func createDir(path string) {
 	}
 }
 
-func createDefaultConfig(filename string) error  {
+func createDefaultConfig(filename string) error {
 	jsonFile, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer jsonFile.Close()
 
-	jsonData, err := json.Marshal(IDE)
+	jsonData, err := json.MarshalIndent(IDE, "", "    ")
 	if err != nil {
 		return err
 	}

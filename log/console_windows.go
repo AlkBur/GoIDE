@@ -1,10 +1,10 @@
 package log
 
 import (
-	"io"
 	"bytes"
-	"syscall"
+	"io"
 	"strings"
+	"syscall"
 	"unsafe"
 )
 
@@ -165,7 +165,7 @@ type textAttributes struct {
 }
 
 type (
-	outputMode int
+	outputMode  int
 	csiState    int
 	parseResult int
 )
@@ -401,14 +401,4 @@ func setConsoleTextAttribute(hConsoleOutput uintptr, wAttributes uint16) bool {
 		hConsoleOutput,
 		uintptr(wAttributes))
 	return ret != 0
-}
-
-
-// newBrush return a fix color Brush
-func newBrush(color string) brush {
-	pre := "\x1b["
-	reset := "\x1b[0m"
-	return func(text string) string {
-		return pre + color + "m" + text + reset
-	}
 }

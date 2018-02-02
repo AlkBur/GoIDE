@@ -1,15 +1,15 @@
 package util
 
 import (
-	"os/exec"
-	"os"
-	"path/filepath"
-	"os/user"
-	"runtime"
-	"errors"
 	"bytes"
-	"strings"
+	"errors"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 )
 
 func IsWindows() bool {
@@ -17,17 +17,19 @@ func IsWindows() bool {
 }
 
 func Pwd() string {
-	//file, _ := exec.LookPath(os.Args[0])
-	//pwd, _ := filepath.Abs(file)
-	//return filepath.Dir(pwd)
-	pwd, _ := filepath.Abs(filepath.Base(""))
+	file, _ := exec.LookPath(os.Args[0])
+	pwd, _ := filepath.Abs(file)
+
+	if strings.HasPrefix(pwd, os.TempDir()) {
+		pwd, _ = filepath.Abs(filepath.Base(""))
+	}
 	return pwd
 }
 
 func HomeDir() (string, error) {
-	user, err := user.Current()
+	usr, err := user.Current()
 	if nil == err {
-		return user.HomeDir, nil
+		return usr.HomeDir, nil
 	}
 
 	// cross compile support

@@ -22,3 +22,21 @@ type Event struct {
 	Sid  string      `json:"sid"`  // IDE session id related
 	Data interface{} `json:"data"` // event data
 }
+
+type UserEventQueue struct {
+	Sid      string      // IDE session id related
+	Queue    chan *Event // queue
+	Handlers []Handler   // event handlers
+}
+
+type Handler interface {
+	Handle(event *Event)
+}
+
+func (ev *Event) Copy() *Event {
+	return &Event{
+		Code: ev.Code,
+		Sid:  ev.Sid,
+		Data: ev.Data,
+	}
+}

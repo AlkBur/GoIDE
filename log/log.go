@@ -1,15 +1,15 @@
 package log
 
 import (
+	"fmt"
+	"io"
+	"os"
+	"path"
+	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"fmt"
-	"os"
-	"strings"
-	"path"
-	"strconv"
-	"runtime"
-	"io"
 )
 
 const defaultAsyncMsgLen = 1000
@@ -25,8 +25,8 @@ const (
 
 // Name for adapter support
 const (
-	AdapterConsole   = "console"
-	AdapterFile      = "file"
+	AdapterConsole = "console"
+	AdapterFile    = "file"
 )
 
 const (
@@ -48,14 +48,14 @@ const (
 )
 
 var (
-	logger = NewLogger()
-	logMsgPool *sync.Pool
-	adapters = make(map[string]newLoggerFunc)
+	logger      = NewLogger()
+	logMsgPool  *sync.Pool
+	adapters    = make(map[string]newLoggerFunc)
 	levelPrefix = [LevelDebug + 1]string{"[E] ", "[W] ", "[I] ", "[D] "}
 )
 
 type (
-	LogLevel uint32
+	LogLevel      uint32
 	newLoggerFunc func() Logger
 )
 
@@ -152,6 +152,10 @@ func SetLogger(adapter string, config ...string) error {
 
 func (bl *BaseLogger) SetLevel(l LogLevel) {
 	bl.level = l
+}
+
+func (bl *BaseLogger) GetLevel() LogLevel {
+	return bl.level
 }
 
 func (bl *BaseLogger) Error(format string, v ...interface{}) {
@@ -290,7 +294,7 @@ func (lg *logWriter) println(when time.Time, msg string) {
 func formatTimeHeader(when time.Time) ([]byte, int) {
 	y, mo, d := when.Date()
 	h, mi, s := when.Clock()
-	ns := when.Nanosecond()/1000000
+	ns := when.Nanosecond() / 1000000
 	//len("2006/01/02 15:04:05.123 ")==24
 	var buf [24]byte
 
@@ -325,4 +329,8 @@ func formatTimeHeader(when time.Time) ([]byte, int) {
 
 func SetLevel(l LogLevel) {
 	logger.SetLevel(l)
+}
+
+func GetLevel() LogLevel {
+	return logger.GetLevel()
 }
