@@ -1,0 +1,25 @@
+[[ define "layout" ]]
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>[[.title]]</title>
+    [[- $prefix := .conf.Context -]]
+    <!-- CSS -->
+    [[- if .files.CSS]]
+    [[range $f := .files.CSS]]
+    <link rel='stylesheet' href='[[$prefix]]/static/css/[[$f]]' type='text/css' media='all' />
+    [[- end]]
+    [[- end]]
+    <!-- JS -->
+    [[- if .files.JS]]
+    [[range $f := .files.JS]]
+    <script type="text/javascript" src="[[$prefix]]/static/js/[[$f]]"></script>
+    [[- end]]
+    [[- end]]
+</head>
+<body>
+    [[template "content" .]]
+</body>
+</html>
+[[ end ]]

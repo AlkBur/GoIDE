@@ -14,6 +14,11 @@ import (
 	"time"
 )
 
+const (
+	IdeVersion = "0.1"
+	IdeName    = "Golang IDE"
+)
+
 var (
 	// IDE configurations.
 	IDE *conf

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"compress/gzip"
 	"flag"
 	"fmt"
 	"github.com/AlkBur/GoIDE/conf"
 	"github.com/AlkBur/GoIDE/handlers"
+	"github.com/AlkBur/GoIDE/i18n"
 	"github.com/AlkBur/GoIDE/log"
 	"github.com/AlkBur/GoIDE/session"
 	"github.com/AlkBur/GoIDE/util"
@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -27,7 +28,7 @@ func init() {
 
 	log.SetLevel(log.LevelInfo)
 
-	//i18n.Load()
+	i18n.Load()
 	conf.Load(*confPath, *confIP, *confPort, *confLogLevel)
 	conf.CheckEnv()
 	session.StartUserMonitor()
@@ -46,11 +47,21 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	///////////////Router///////////////
 	router := http.NewServeMux()
-	router.HandleFunc("/", handlerGzWrapper(handlers.Index))
+	router.HandleFunc(conf.IDE.Context+"/", handlerWrapper(handlers.Index, true))
 
-	//time.Sleep(time.Minute * 2)
+	// static resources
+	fs := http.FileServer(http.Dir(filepath.Join(conf.IDE.WD, "static")))
+	router.Handle(conf.IDE.Context+"/static/", http.StripPrefix(conf.IDE.Context+"/static/", fs))
+	router.HandleFunc(conf.IDE.Context+"/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, conf.IDE.WD+"/static/favicon.ico")
+	})
 
+	// user
+	router.HandleFunc(conf.IDE.Context+"/login", handlerWrapper(handlers.LoginHandler, false))
+
+	///////////////Start server///////////////
 	url := fmt.Sprintf("%s:%d%s", conf.IDE.IP, conf.IDE.Port, conf.IDE.Context)
 	log.Info("IDE is running [%s]", url)
 
@@ -58,6 +69,10 @@ func main() {
 	if err != nil {
 		log.Error(err)
 	}
+
+	//[[range .css]]
+	//<script type="text/javascript" src="[[.conf.Context]]/static/css/pp">
+	//	[[end]]
 }
 
 func handleSignal() {
@@ -75,9 +90,11 @@ func handleSignal() {
 	}()
 }
 
-func handlerGzWrapper(f http.HandlerFunc) http.HandlerFunc {
+func handlerWrapper(f http.HandlerFunc, gz bool) http.HandlerFunc {
 	handler := panicRecover(f)
-	handler = util.GzipHandler(handler)
+	if gz {
+		handler = util.GzipHandler(handler)
+	}
 	handler = loging(handler)
 	//handler = i18nLoad(handler)
 
@@ -94,11 +111,9 @@ func panicRecover(handler http.HandlerFunc) http.HandlerFunc {
 func loging(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
 		defer func() {
 			log.Debug("[%s, %s, %s]", r.Method, r.RequestURI, time.Since(start))
 		}()
-
 		handler(w, r)
 	}
 }

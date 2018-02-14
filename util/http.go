@@ -2,6 +2,10 @@ package util
 
 import (
 	"compress/gzip"
+	"encoding/json"
+	"encoding/xml"
+	"github.com/AlkBur/GoIDE/log"
+	"html/template"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -22,9 +26,19 @@ var (
 	compressionPool = &sync.Pool{New: func() interface{} { return gzip.NewWriter(nil) }}
 )
 
+type H map[string]interface{}
+
 type gzipResponseWriter struct {
 	io.Writer
 	http.ResponseWriter
+}
+
+// Result.
+type Result struct {
+	Result bool        `json:"result"` // return result
+	Code   string      `json:"code"`   // return code
+	Msg    string      `json:"msg"`    // message
+	Data   interface{} `json:"data"`   // data object
 }
 
 func getGzipWriter(w http.ResponseWriter) (gz *gzip.Writer) {
@@ -87,4 +101,49 @@ func shouldCompress(req *http.Request) bool {
 	default:
 		return true
 	}
+}
+
+func LoadTemplate(name ...string) *template.Template {
+	return template.Must(template.New("").Delims("[[", "]]").ParseFiles(name...))
+}
+
+// MarshalXML allows type H to be used with xml.Marshal.
+func (h H) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	start.Name = xml.Name{
+		Space: "",
+		Local: "map",
+	}
+	if err := e.EncodeToken(start); err != nil {
+		return err
+	}
+	for key, value := range h {
+		elem := xml.StartElement{
+			Name: xml.Name{Space: "", Local: key},
+			Attr: []xml.Attr{},
+		}
+		if err := e.EncodeElement(value, elem); err != nil {
+			return err
+		}
+	}
+
+	return e.EncodeToken(xml.EndElement{Name: start.Name})
+}
+
+func NewResult() *Result {
+	return &Result{
+		Result: true,
+		Code:   "0",
+		Msg:    "",
+		Data:   nil,
+	}
+}
+
+func (res *Result) Send(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	data, err := json.Marshal(res)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	w.Write(data)
 }

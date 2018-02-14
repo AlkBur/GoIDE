@@ -101,3 +101,17 @@ func (u *User) CheckPassword(password string) bool {
 	}
 	return true
 }
+
+func GetUser(username string) *User {
+	if "playground" == username { // reserved user for Playground
+		// mock it
+		return NewUser("playground", "", "", "")
+	}
+
+	for _, user := range Users {
+		if user.Name == username {
+			return user
+		}
+	}
+	return nil
+}
