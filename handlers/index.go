@@ -40,11 +40,40 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if indexTemplate == nil || log.LevelDebug == log.GetLevel() {
-		indexTemplate = util.LoadTemplate("views/ide.tmpl", "views/index.html")
+	username := httpSession.Values["username"].(string)
+	if "playground" == username { // reserved user for Playground
+		http.Redirect(w, r, conf.IDE.Context+"/login", http.StatusFound)
+
+		return
 	}
 
-	model := NewHtmlParam([]string{"ide.css", "login.css"}, []string{"lib/jquery-3.3.1.min.js", "ide.js"})
+	httpSession.Options.MaxAge = conf.IDE.HTTPSessionMaxAge
+	if "" != conf.IDE.Context {
+		httpSession.Options.Path = conf.IDE.Context
+	}
+	httpSession.Save(r, w)
+
+	user := conf.GetUser(username)
+	if user == nil {
+		log.Warn("Not found user [%s]", username)
+		http.Redirect(w, r, conf.IDE.Context+"/login", http.StatusFound)
+		return
+	}
+
+	ideSessions := session.GetUserSessions(user)
+
+	//model := NewHtmlParam([]string{"ide.css", "index.css"}, []string{"lib/jquery-3.3.1.min.js", "ide.js"})
+	model := NewHtmlParam([]string{"lib/webix.css", "lib/skins/compact.css", "ide.css"},
+		[]string{"lib/webix.js", "ide.js"})
+	model["i18n"] = i18n.GetAll(user.Locale)
+	model["locale"] = user.Locale
+	model["sid"] = session.GenId()
+
+	log.Debug("User [%s] has [%d] sessions", user, len(ideSessions))
+
+	if indexTemplate == nil || log.LevelDebug == log.GetLevel() {
+		indexTemplate = util.LoadTemplate("views/ide.tmpl", "views/index.html", "views/menu.html")
+	}
 
 	if err := indexTemplate.ExecuteTemplate(w, "layout", model); err != nil {
 		log.Error(err)

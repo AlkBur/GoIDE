@@ -97,8 +97,10 @@ func NewUser(username, password, email, workspace string) *User {
 
 func (u *User) CheckPassword(password string) bool {
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
+		log.Debug("Пароль не верный: %s", password)
 		return false
 	}
+	log.Debug("Пароль верный: %s", password)
 	return true
 }
 

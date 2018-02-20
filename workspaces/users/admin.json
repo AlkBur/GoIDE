@@ -1,12 +1,12 @@
 {
     "Name": "admin",
-    "Password": "$2a$10$0iuA0HFxAT.SOO6eJAj7tuRgIWDLM6LldIvqqBrV5AEn/1d58IGDy",
+    "Password": "$2a$10$vcipaYE6smCLPFc2eH6tAeGviLDHqNi9J5rTUoA0Etgdp2aulMcPq",
     "Email": "",
     "Workspace": "${GOPATH}",
     "Locale": "en_US",
-    "Created": 1517493038348726600,
-    "Updated": 1517493038348726600,
-    "Lived": 1517493038348726600,
+    "Created": 1518773221498168400,
+    "Updated": 1518773221498168400,
+    "Lived": 1518773221498168400,
     "Editor": {
         "FontFamily": "Consolas, 'Courier New', monospace",
         "FontSize": "13px",

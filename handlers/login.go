@@ -28,7 +28,10 @@ func getLoginHandler(w http.ResponseWriter, r *http.Request) {
 		loginTemplate = util.LoadTemplate("views/ide.tmpl", "views/login.html")
 	}
 
-	model := NewHtmlParam([]string{"ide.css", "login.css"}, []string{"lib/jquery-3.3.1.min.js", "ide.js"})
+	//model := NewHtmlParam([]string{"ide.css", "login.css"}, []string{"lib/jquery-3.3.1.min.js"})
+	model := NewHtmlParam([]string{"lib/webix.css", "ide.css"},
+		[]string{"lib/jquery-3.3.1.min.js", "lib/webix.js",
+			"login.js"})
 
 	if err := loginTemplate.ExecuteTemplate(w, "layout", model); err != nil {
 		log.Error(err)
@@ -47,10 +50,12 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	user := conf.GetUser(username)
 	if user == nil {
 		result.Result = false
+		result.Msg = "User not found: " + username
 		return
 	}
 	if !user.CheckPassword(password) {
 		result.Result = false
+		result.Msg = "Error check pasword"
 		return
 	}
 	// create a HTTP session

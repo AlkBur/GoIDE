@@ -168,7 +168,7 @@ func initUsers() {
 	f.Close()
 
 	if len(names) == 0 {
-		usr := NewUser("admin", "", "", "${GOPATH}")
+		usr := NewUser("admin", "admin", "", "${GOPATH}")
 		if !usr.Save() {
 			os.Exit(-1)
 		}

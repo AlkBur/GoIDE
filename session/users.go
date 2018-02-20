@@ -9,9 +9,9 @@ import (
 	"time"
 )
 
-var ActiveUsers = &Users{Users: make([]*User, 0)}
+var ActiveUsers = &Users{Users: make([]*UserSession, 0)}
 
-type User struct {
+type UserSession struct {
 	Usr   *conf.User
 	Event *event.UserEventQueue
 	Sid   string // IDE session id related
@@ -19,7 +19,7 @@ type User struct {
 
 type Users struct {
 	sync.RWMutex
-	Users []*User
+	Users []*UserSession
 }
 
 func StartUserMonitor() {
@@ -52,4 +52,18 @@ func SaveActiveUsers() {
 			log.Debug("Saved online user [%s]'s configurations", u.Usr.Name)
 		}
 	}
+}
+
+func GetUserSessions(usr *conf.User) []*UserSession {
+	ActiveUsers.RLock()
+	defer ActiveUsers.RUnlock()
+
+	ret := make([]*UserSession, 0)
+
+	for _, s := range ActiveUsers.Users {
+		if s.Usr == usr {
+			ret = append(ret, s)
+		}
+	}
+	return ret
 }

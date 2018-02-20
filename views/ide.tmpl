@@ -19,6 +19,9 @@
     [[- end]]
 </head>
 <body>
+    <script>
+        window.conf = {"Port":[[.conf.Port]], "Context":"[[.conf.Context]]"};
+    </script>
     [[template "content" .]]
 </body>
 </html>
